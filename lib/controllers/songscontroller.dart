@@ -6,6 +6,7 @@ import 'package:audiotagger/audiotagger.dart';
 import 'package:audiotagger/models/tag.dart';
 import 'package:awesomemusic/helper/helper.dart';
 import 'package:awesomemusic/modals/modals.dart';
+import 'package:awesomemusic/modals/playlist.dart';
 import 'package:awesomemusic/modals/searchresults.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_neumorphic_null_safety/flutter_neumorphic.dart';
@@ -28,6 +29,11 @@ class SongsController extends GetxController {
   TopSongs get topSongs => _topSongs.value;
   var searchResults = Rxn<SearchResults>();
   var audioTask = AudioTask();
+  var focusNode = FocusNode();
+  var searchQuery = TextEditingController();
+
+  ///[Playlist] Id [1] os reserved
+  var cuurentPlaylistId = ''.obs;
   set topSongs(TopSongs topSongs) {
     _topSongs.value = topSongs;
   }
@@ -49,9 +55,42 @@ class SongsController extends GetxController {
   ///[Play]
   play(String url) async {
     if (AudioService.running) {
-      AudioService.skipToQueueItem(
-        (await decryptUrl(url)).replaceAll('http:', 'https:'),
-      );
+      if (cuurentPlaylistId.value == '1') {
+        AudioService.skipToQueueItem(
+          (await decryptUrl(url)).replaceAll('http:', 'https:'),
+        );
+      } else {
+        try {
+          var queue = <MediaItem>[];
+          var list = _topSongs.value.list!.map(
+            (data) async {
+              var url = await decryptUrl(data.moreInfo!.encryptedMediaUrl!);
+              return MediaItem(
+                id: url.replaceAll('http:', 'https:'),
+                album: data.moreInfo!.album!.sanitize(),
+                title: data.title!.sanitize(),
+                displaySubtitle: data.subtitle!.sanitize(),
+                displayTitle: data.title!.sanitize(),
+                duration:
+                    Duration(seconds: int.parse(data.moreInfo!.duration!)),
+                artUri: Uri.parse(data.image!.replaceAll('http:', 'https:')),
+                extras: {'id': data.id},
+              );
+            },
+          ).toList();
+
+          for (var item in list) {
+            queue.add(await item);
+          }
+          await AudioService.updateQueue(queue);
+          AudioService.skipToQueueItem(
+            (await decryptUrl(url)).replaceAll('http:', 'https:'),
+          );
+          cuurentPlaylistId.value = '1';
+        } catch (e) {
+          print(e);
+        }
+      }
     } else {
       try {
         var done = await preparAudioService();
@@ -59,10 +98,90 @@ class SongsController extends GetxController {
           AudioService.skipToQueueItem(
             (await decryptUrl(url)).replaceAll('http:', 'https:'),
           );
+          cuurentPlaylistId.value = '1';
         }
         print(done);
       } catch (e) {
         print(e);
+      }
+    }
+  }
+
+  ///[Setup] playlist according to [Playlist] data obtained via api
+  playFromOnlinePlaylist(PlaylistInfo playlistInfo, String url) async {
+    if (AudioService.running) {
+      if (cuurentPlaylistId.value == playlistInfo.id) {
+        // await AudioService.pause();
+        await decryptUrl(url).then((value) => print(value));
+        await AudioService.skipToQueueItem(
+          (await decryptUrl(url)).replaceAll('http:', 'https:'),
+        );
+        cuurentPlaylistId.value = playlistInfo.id;
+      } else {
+        var queue = <MediaItem>[];
+        var list = playlistInfo.list.map(
+          (data) async {
+            var url = await decryptUrl(data.more_info.encrypted_media_url);
+            return MediaItem(
+              id: url.replaceAll('http:', 'https:'),
+              album: data.more_info.album.sanitize(),
+              title: data.title.sanitize(),
+              displaySubtitle: data.subtitle.sanitize(),
+              displayTitle: data.title.sanitize(),
+              duration: Duration(seconds: int.parse(data.more_info.duration)),
+              artUri: Uri.parse(data.image.replaceAll('http:', 'https:')),
+              extras: {'id': data.id},
+            );
+          },
+        ).toList();
+        for (var item in list) {
+          queue.add(await item);
+        }
+        await AudioService.updateQueue(queue);
+        await AudioService.skipToQueueItem(
+          (await decryptUrl(url)).replaceAll('http:', 'https:'),
+        );
+        cuurentPlaylistId.value = playlistInfo.id;
+        // }
+      }
+    } else {
+      var queue = <dynamic>[];
+      var list = playlistInfo.list.map(
+        (data) async {
+          var url = await decryptUrl(data.more_info.encrypted_media_url);
+          return MediaItem(
+            id: url.replaceAll('http:', 'https:'),
+            album: data.more_info.album.sanitize(),
+            title: data.title.sanitize(),
+            displaySubtitle: data.subtitle.sanitize(),
+            displayTitle: data.title.sanitize(),
+            duration: Duration(seconds: int.parse(data.more_info.duration)),
+            artUri: Uri.parse(data.image.replaceAll('http:', 'https:')),
+            extras: {'id': data.id},
+          ).toJson();
+        },
+      ).toList();
+
+      for (var item in list) {
+        queue.add(await item);
+      }
+      var done = await AudioService.start(
+        backgroundTaskEntrypoint: _audioPlayerTaskEntrypoint,
+        androidNotificationChannelName: 'Awesome Music',
+        // Enable this if you want the Android service to exit the foreground state on pause.
+        //androidStopForegroundOnPause: true,
+        androidNotificationColor: 0xFF2196f3,
+        androidNotificationIcon: 'mipmap/launcher_icon',
+        androidEnableQueue: true,
+        params: {
+          'queue': queue,
+        },
+      );
+      if (done) {
+        AudioService.skipToQueueItem(
+          (await decryptUrl(url)).replaceAll('http:', 'https:'),
+        );
+        cuurentPlaylistId.value = playlistInfo.id;
       }
     }
   }
@@ -96,7 +215,7 @@ class SongsController extends GetxController {
       // Enable this if you want the Android service to exit the foreground state on pause.
       //androidStopForegroundOnPause: true,
       androidNotificationColor: 0xFF2196f3,
-      androidNotificationIcon: 'mipmap/ic_launcher',
+      androidNotificationIcon: 'mipmap/launcher_icon',
       androidEnableQueue: true,
       params: {
         'queue': queue,
@@ -104,28 +223,33 @@ class SongsController extends GetxController {
     );
   }
 
-  Future<List> fetchSongsList(searchQuery) async {
-    var res = await http.get(Uri.parse(searchUrl(searchQuery)),
-        headers: {"Accept": "application/json"});
-    var resEdited = (res.body).split("-->");
-    var getMain = json.decode(resEdited[1]);
-    searchResults.value = SearchResults.fromJson(getMain);
-    // searchedList = getMain["songs"]["data"];
-    // for (int i = 0; i < searchedList.length; i++) {
-    //   searchedList[i]['title'] = searchedList[i]['title']
-    //       .toString()
-    //       .replaceAll("&amp;", "&")
-    //       .replaceAll("&#039;", "'")
-    //       .replaceAll("&quot;", "\"");
+  ///[Fetch] [Playlist] Info
+  Future<PlaylistInfo> fetchPlaylist(String id) async {
+    var res = await cache.remember(
+      'playlist$id',
+      () async {
+        var response = await http.get(
+          Uri.parse(playlisturl(id)),
+          headers: {"Accept": "application/json"},
+        );
+        var resEdited = (response.body).split("-->");
+        return json.decode(resEdited[1]);
+      },
+    );
+    return PlaylistInfo.fromMap(Map<String, dynamic>.from(res));
+  }
 
-    //   searchedList[i]['more_info']['singers'] = searchedList[i]['more_info']
-    //           ['singers']
-    //       .toString()
-    //       .replaceAll("&amp;", "&")
-    //       .replaceAll("&#039;", "'")
-    //       .replaceAll("&quot;", "\"");
-    // }
-    return [];
+  ///[fetch] [Search] results
+  fetchSearchResult() async {
+    searchResults.value = null;
+    var searchQuery = this.searchQuery.text;
+    var res = await cache.remember('searchResultsof$searchQuery', () async {
+      var response = await http.get(Uri.parse(searchUrl(searchQuery)),
+          headers: {"Accept": "application/json"});
+      var resEdited = (response.body).split("-->");
+      return json.decode(resEdited[1]);
+    });
+    searchResults.value = SearchResults.fromMap(Map<String, dynamic>.from(res));
   }
 
   ///[GET] method for getting top songs
@@ -170,19 +294,22 @@ class SongsController extends GetxController {
           var fetchedLyrics = json.decode(lyricsEdited[1]);
           return fetchedLyrics["lyrics"].toString().replaceAll("<br>", "\n");
         } else {
-          String lyricsApiUrl = "https://musifydev.vercel.app/lyrics/" +
-              songDetails.moreInfo!.artistMap!.artists!.first.name! +
-              "/" +
-              songDetails.title!;
-          var lyricsApiRes = await http.get(Uri.parse(lyricsApiUrl),
-              headers: {"Accept": "application/json"});
-          var lyricsResponse = json.decode(lyricsApiRes.body);
-          if (lyricsResponse['status'] == true &&
-              lyricsResponse['lyrics'] != null) {
-            return lyricsResponse['lyrics'];
-          } else {
-            return null;
-          }
+          if (songDetails.moreInfo!.artistMap!.artists!.isNotEmpty) {
+            String lyricsApiUrl = "https://musifydev.vercel.app/lyrics/" +
+                songDetails.moreInfo!.artistMap!.artists!.first.name! +
+                "/" +
+                songDetails.title!;
+            var lyricsApiRes = await http.get(Uri.parse(lyricsApiUrl),
+                headers: {"Accept": "application/json"});
+            var lyricsResponse = json.decode(lyricsApiRes.body);
+            if (lyricsResponse['status'] == true &&
+                lyricsResponse['lyrics'] != null) {
+              return lyricsResponse['lyrics'];
+            } else {
+              return '';
+            }
+          } else
+            return '';
         }
       },
     );

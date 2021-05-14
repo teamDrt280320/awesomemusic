@@ -1,7 +1,7 @@
 name: awesomemusic
 description: A new Flutter project.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: '>=2.12.0 <3.0.0'
@@ -37,6 +37,12 @@ dev_dependencies:
     sdk: flutter
   build_runner: ^2.0.1
   hive_generator: ^1.1.0
+  flutter_launcher_icons: ^0.9.0
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/am_icon.png"
 
 flutter:
   uses-material-design: true

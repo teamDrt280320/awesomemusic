@@ -43,7 +43,7 @@ class AudioTask extends BackgroundAudioTask {
           break;
       }
     });
-    AudioServiceBackground.setQueue(queue);
+    await AudioServiceBackground.setQueue(queue);
     try {
       await _player.setAudioSource(ConcatenatingAudioSource(
         children:
@@ -55,6 +55,26 @@ class AudioTask extends BackgroundAudioTask {
       onStop();
     }
     return super.onStart(params);
+  }
+
+  @override
+  Future<void> onUpdateQueue(List<MediaItem> queue1) async {
+    print('object');
+    print('Adding data to queue');
+    queue.clear();
+    queue.addAll(queue1);
+    try {
+      await AudioServiceBackground.setQueue(queue);
+      await _player.setAudioSource(ConcatenatingAudioSource(
+        children:
+            queue.map((item) => AudioSource.uri(Uri.parse(item.id))).toList(),
+      ));
+    } catch (e) {
+      print("Error: $e");
+      onStop();
+    }
+
+    return super.onUpdateQueue(queue);
   }
 
   @override
@@ -93,6 +113,50 @@ class AudioTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSeekForward(bool begin) async => _seekContinuously(begin, 1);
+  @override
+  Future<void> onAddQueueItem(MediaItem mediaItem) async {
+    if (!queue.any((element) => element.id == mediaItem.id)) {
+      queue.add(mediaItem);
+      await AudioServiceBackground.setQueue(queue);
+      await _player.setAudioSource(ConcatenatingAudioSource(
+        children:
+            queue.map((item) => AudioSource.uri(Uri.parse(item.id))).toList(),
+      ));
+    }
+    await AudioService.playFromMediaId(
+      mediaItem.id,
+    );
+    return super.onAddQueueItem(mediaItem);
+  }
+
+  // @override
+  // Future<void> playFromMediaId(String medisId) async {}
+
+  @override
+  Future<void> onPlayFromMediaId(String mediaId) {
+    // Then default implementations of onSkipToNext and onSkipToPrevious will
+    // delegate to this method.
+    final newIndex = queue.indexWhere((item) => item.id == mediaId);
+    print(newIndex);
+    if (newIndex != -1) {
+      _skipState = newIndex > index!
+          ? AudioProcessingState.skippingToNext
+          : AudioProcessingState.skippingToPrevious;
+      // This jumps to the beginning of the queue item at newIndex.
+      _player.seek(Duration.zero, index: newIndex);
+      // Demonstrate custom events.
+      _player.play();
+    }
+
+    // During a skip, the player may enter the buffering state. We could just
+    // propagate that state directly to AudioService clients but AudioService
+    // has some more specific states we could use for skipping to next and
+    // previous. This variable holds the preferred state to send instead of
+    // buffering during a skip, and it is cleared as soon as the player exits
+    // buffering (see the listener in onStart).
+
+    return super.onPlayFromMediaId(mediaId);
+  }
 
   @override
   Future<void> onSeekBackward(bool begin) async => _seekContinuously(begin, -1);
@@ -125,6 +189,7 @@ class AudioTask extends BackgroundAudioTask {
     // Then default implementations of onSkipToNext and onSkipToPrevious will
     // delegate to this method.
     final newIndex = queue.indexWhere((item) => item.id == mediaId);
+    print(newIndex);
     if (newIndex == -1) return;
     // During a skip, the player may enter the buffering state. We could just
     // propagate that state directly to AudioService clients but AudioService
@@ -132,9 +197,12 @@ class AudioTask extends BackgroundAudioTask {
     // previous. This variable holds the preferred state to send instead of
     // buffering during a skip, and it is cleared as soon as the player exits
     // buffering (see the listener in onStart).
-    _skipState = newIndex > index!
-        ? AudioProcessingState.skippingToNext
-        : AudioProcessingState.skippingToPrevious;
+    if (index != null && index! < 0)
+      _skipState = newIndex > index!
+          ? AudioProcessingState.skippingToNext
+          : AudioProcessingState.skippingToPrevious;
+    else
+      _skipState = null;
     // This jumps to the beginning of the queue item at newIndex.
     _player.seek(Duration.zero, index: newIndex);
     // Demonstrate custom events.

@@ -348,21 +348,41 @@ class Album_More_info {
   }
 
   factory Album_More_info.fromMap(Map<String, dynamic> map) {
-    return Album_More_info(
-      music: map['music'],
-      ctr: map['ctr']?.toInt(),
-      year: map['year'],
-      is_movie: map['is_movie'],
-      language: map['language'],
-      song_pids: map['song_pids'],
-      firstname: map['firstname'],
-      artist_name: List<String>.from(map['artist_name']),
-      entity_type: map['entity_type'],
-      entity_sub_type: map['entity_sub_type'],
-      video_available: map['video_available'],
-      is_dolby_content: map['is_dolby_content'],
-      lastname: map['lastname'],
-    );
+    if (map != null && map.isNotEmpty) {
+      return Album_More_info(
+        music: map['music'],
+        ctr: map['ctr']?.toInt(),
+        year: map['year'],
+        is_movie: map['is_movie'],
+        language: map['language'],
+        song_pids: map['song_pids'],
+        firstname: map['firstname'],
+        artist_name: map['artist_name'] != null
+            ? List<String>.from(map['artist_name'])
+            : [],
+        entity_type: map['entity_type'],
+        entity_sub_type: map['entity_sub_type'],
+        video_available: map['video_available'],
+        is_dolby_content: map['is_dolby_content'],
+        lastname: map['lastname'],
+      );
+    } else {
+      return Album_More_info(
+        music: '',
+        ctr: 0,
+        year: '',
+        is_movie: '',
+        language: '',
+        song_pids: '',
+        firstname: '',
+        artist_name: [''],
+        entity_type: '',
+        entity_sub_type: '',
+        video_available: false,
+        is_dolby_content: false,
+        lastname: '',
+      );
+    }
   }
 
   String toJson() => json.encode(toMap());

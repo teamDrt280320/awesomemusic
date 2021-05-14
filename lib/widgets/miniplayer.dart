@@ -123,12 +123,16 @@ class MiniPlayer extends StatelessWidget {
   }
 
   ///[Title]
-  Text _buildTitle() => Text(songDetails.title);
+  Text _buildTitle() => Text(
+        songDetails.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
 
   ///[Subtitle]
   Text _buildSub() {
     return Text(
-      songDetails.displaySubtitle!,
+      songDetails.displaySubtitle ?? '',
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: GoogleFonts.openSans(),

@@ -11,5 +11,13 @@ extension Cleansing on String {
       .replaceAll(
         '&quot;',
         '\"',
+      )
+      .replaceAll(
+        '&#039;',
+        '\'',
       );
+
+  String highRes() => this.replaceAll('150x150', '500x500');
+  String lowRes() => this.replaceAll('150x150', '75x75');
+  String mediumRes() => this.replaceAll('150x150', '250x250');
 }

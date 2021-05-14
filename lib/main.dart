@@ -9,7 +9,6 @@ import 'views/homepage/homepage.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
   runApp(MyApp());
 }
 

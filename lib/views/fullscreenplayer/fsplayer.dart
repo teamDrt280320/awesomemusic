@@ -71,7 +71,7 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
         _songsController.teController.text = value.lyrics!.trim();
       return value;
     });
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -340,7 +340,7 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
         horizontal: getProportionateScreenWidth(36),
       ),
       child: Text(
-        mediaItem.displaySubtitle!,
+        mediaItem.displaySubtitle ?? '',
         textAlign: TextAlign.center,
         style: GoogleFonts.openSans(
           fontWeight: FontWeight.w500,
