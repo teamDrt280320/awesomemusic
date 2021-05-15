@@ -131,11 +131,9 @@ class _SearchPageState extends State<SearchPage> {
                                           image: DecorationImage(
                                             fit: BoxFit.cover,
                                             image: CachedNetworkImageProvider(
-                                              data.image.sanitize().replaceAll(
-                                                    '150x150',
-                                                    '250x250',
-                                                  ),
-                                            ),
+                                                data.image
+                                                    .sanitize()
+                                                    .mediumRes()),
                                           ),
                                         ),
                                         height:
@@ -173,7 +171,7 @@ class _SearchPageState extends State<SearchPage> {
                                       if (AudioService.running) {
                                         await AudioService.addQueueItem(
                                           new MediaItem(
-                                            id: songDetails
+                                            id: songDetails!
                                                 .moreInfo!.encryptedMediaUrl!,
                                             album: songDetails.moreInfo!.album!,
                                             title: songDetails.title!,
@@ -184,13 +182,17 @@ class _SearchPageState extends State<SearchPage> {
                                                 Uri.parse(songDetails.image!),
                                           ),
                                         );
+                                        await AudioService.skipToQueueItem(
+                                          songDetails
+                                              .moreInfo!.encryptedMediaUrl!,
+                                        );
                                       } else {
                                         bool done = await _songsController
                                             .preparAudioService();
                                         if (done) {
                                           await AudioService.addQueueItem(
                                             new MediaItem(
-                                              id: songDetails
+                                              id: songDetails!
                                                   .moreInfo!.encryptedMediaUrl!,
                                               album:
                                                   songDetails.moreInfo!.album!,
@@ -201,6 +203,10 @@ class _SearchPageState extends State<SearchPage> {
                                               artUri:
                                                   Uri.parse(songDetails.image!),
                                             ),
+                                          );
+                                          await AudioService.skipToQueueItem(
+                                            songDetails
+                                                .moreInfo!.encryptedMediaUrl!,
                                           );
                                         }
                                       }
@@ -220,12 +226,10 @@ class _SearchPageState extends State<SearchPage> {
                                         ],
                                         image: DecorationImage(
                                           fit: BoxFit.cover,
-                                          image: CachedNetworkImageProvider(
-                                            data.image.sanitize().replaceAll(
-                                                  '150x150',
-                                                  '250x250',
-                                                ),
-                                          ),
+                                          image: CachedNetworkImageProvider(data
+                                              .image
+                                              .sanitize()
+                                              .mediumRes()),
                                         ),
                                       ),
                                       height: getProportionateScreenWidth(100),

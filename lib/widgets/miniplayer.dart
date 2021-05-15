@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:awesomemusic/controllers/songscontroller.dart';
 import 'package:awesomemusic/helper/helper.dart';
@@ -162,12 +164,22 @@ class MiniPlayer extends StatelessWidget {
               ),
             ),
           ],
-          image: DecorationImage(
-            fit: BoxFit.cover,
-            image: CachedNetworkImageProvider(
-              songDetails.artUri.toString(),
-            ),
-          ),
+          image: songDetails.extras?['isLocal'] ?? false
+              ? songDetails.artUri != null
+                  ? DecorationImage(
+                      fit: BoxFit.cover,
+                      image: FileImage(File.fromUri(songDetails.artUri!))
+                      // : CachedNetworkImageProvider(
+                      //     songDetails.artUri.toString(),
+                      //   ),
+                      )
+                  : null
+              : DecorationImage(
+                  fit: BoxFit.cover,
+                  image: CachedNetworkImageProvider(
+                    songDetails.artUri.toString(),
+                  ),
+                ),
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
@@ -58,17 +59,18 @@ class AudioTask extends BackgroundAudioTask {
   }
 
   @override
-  Future<void> onUpdateQueue(List<MediaItem> queue1) async {
-    print('object');
+  Future<void> onUpdateQueue(List<MediaItem> queue) async {
     print('Adding data to queue');
     queue.clear();
-    queue.addAll(queue1);
+    this.queue.addAll(queue);
+    await AudioServiceBackground.setQueue(queue);
     try {
-      await AudioServiceBackground.setQueue(queue);
-      await _player.setAudioSource(ConcatenatingAudioSource(
-        children:
-            queue.map((item) => AudioSource.uri(Uri.parse(item.id))).toList(),
-      ));
+      await _player.setAudioSource(
+        ConcatenatingAudioSource(
+          children:
+              queue.map((item) => AudioSource.uri(Uri.parse(item.id))).toList(),
+        ),
+      );
     } catch (e) {
       print("Error: $e");
       onStop();
@@ -115,20 +117,52 @@ class AudioTask extends BackgroundAudioTask {
   Future<void> onSeekForward(bool begin) async => _seekContinuously(begin, 1);
   @override
   Future<void> onAddQueueItem(MediaItem mediaItem) async {
-    if (!queue.any((element) => element.id == mediaItem.id)) {
-      queue.add(mediaItem);
-      await AudioServiceBackground.setQueue(queue);
-      await _player.setAudioSource(ConcatenatingAudioSource(
-        children:
-            queue.map((item) => AudioSource.uri(Uri.parse(item.id))).toList(),
-      ));
-    }
-    await AudioService.playFromMediaId(
-      mediaItem.id,
-    );
+    try {
+      var position = _player.position;
+      print("Duration " + position.toString());
+      if (!queue.any((element) => element.id == mediaItem.id)) {
+        queue.add(mediaItem);
+
+        // var abc = AudioService.currentMediaItem;
+        await AudioServiceBackground.setQueue(queue);
+
+        await _player.setAudioSource(ConcatenatingAudioSource(
+          children:
+              queue.map((item) => AudioSource.uri(Uri.parse(item.id))).toList(),
+        ));
+        print('adding');
+        // if (AudioService.running) {
+        //   AudioService.pause();
+        //   AudioService.skipToQueueItem(abc!.id);
+        //   AudioService.seekTo(position);
+        //   AudioService.play();
+        //   // final newIndex = queue.indexWhere((item) => item.id == abc?.id);
+        //   // if (newIndex != -1) {
+        //   //   _player.pause();
+        //   //   _player.seek(position, index: newIndex);
+        //   //   _player.play();
+        //   // }
+        // }
+      }
+    } catch (e) {}
+
     return super.onAddQueueItem(mediaItem);
   }
 
+  @override
+  Future<void> onRemoveQueueItem(MediaItem mediaItem) async {
+    queue.remove(mediaItem);
+    // var position = await AudioService.positionStream.first;
+    // var abc = AudioService.currentMediaItem;
+    await AudioServiceBackground.setQueue(queue);
+
+    await _player.setAudioSource(ConcatenatingAudioSource(
+      children:
+          queue.map((item) => AudioSource.uri(Uri.parse(item.id))).toList(),
+    ));
+    print('adding');
+    return super.onRemoveQueueItem(mediaItem);
+  }
   // @override
   // Future<void> playFromMediaId(String medisId) async {}
 
@@ -137,13 +171,14 @@ class AudioTask extends BackgroundAudioTask {
     // Then default implementations of onSkipToNext and onSkipToPrevious will
     // delegate to this method.
     final newIndex = queue.indexWhere((item) => item.id == mediaId);
-    print(newIndex);
+    print("newIndex is: $newIndex");
+    print("oldINdex iss: $index");
     if (newIndex != -1) {
       _skipState = newIndex > index!
           ? AudioProcessingState.skippingToNext
           : AudioProcessingState.skippingToPrevious;
       // This jumps to the beginning of the queue item at newIndex.
-      _player.seek(Duration.zero, index: newIndex);
+      if (newIndex != index) _player.seek(Duration.zero, index: newIndex);
       // Demonstrate custom events.
       _player.play();
     }
@@ -189,7 +224,8 @@ class AudioTask extends BackgroundAudioTask {
     // Then default implementations of onSkipToNext and onSkipToPrevious will
     // delegate to this method.
     final newIndex = queue.indexWhere((item) => item.id == mediaId);
-    print(newIndex);
+    print("newIndex is: $newIndex");
+    print("oldINdex is: $index");
     if (newIndex == -1) return;
     // During a skip, the player may enter the buffering state. We could just
     // propagate that state directly to AudioService clients but AudioService
@@ -197,17 +233,16 @@ class AudioTask extends BackgroundAudioTask {
     // previous. This variable holds the preferred state to send instead of
     // buffering during a skip, and it is cleared as soon as the player exits
     // buffering (see the listener in onStart).
-    if (index != null && index! < 0)
+    if (index != newIndex)
       _skipState = newIndex > index!
           ? AudioProcessingState.skippingToNext
           : AudioProcessingState.skippingToPrevious;
     else
-      _skipState = null;
+      _skipState = AudioProcessingState.skippingToQueueItem;
     // This jumps to the beginning of the queue item at newIndex.
-    _player.seek(Duration.zero, index: newIndex);
+    if (newIndex != index) _player.seek(Duration.zero, index: newIndex);
     // Demonstrate custom events.
     _player.play();
-    AudioServiceBackground.sendCustomEvent('skip to $newIndex');
   }
 
   Future<void> _broadcastState() async {

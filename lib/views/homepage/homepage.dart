@@ -57,7 +57,8 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: queue.isNotEmpty &&
-                                    mediaItem!.extras!['id'] == topSong!.id
+                                    mediaItem != null &&
+                                    mediaItem.extras!['id'] == topSong!.id
                                 ? [
                                     BoxShadow(
                                         offset: Offset(
@@ -74,7 +75,8 @@ class _HomePageState extends State<HomePage> {
                           ),
                           child: ListTile(
                             selected: queue.isNotEmpty &&
-                                mediaItem!.extras!['id'] == topSong!.id,
+                                mediaItem != null &&
+                                mediaItem.extras!['id'] == topSong!.id,
                             onTap: () {
                               songsControler
                                   .play(topSong!.moreInfo!.encryptedMediaUrl!);
@@ -102,8 +104,8 @@ class _HomePageState extends State<HomePage> {
                                 if (choice == 'Download') {
                                   songsControler.downloadSong(
                                     context,
-                                    await songsControler
-                                        .fetchSongDetails(topSong.id),
+                                    (await songsControler
+                                        .fetchSongDetails(topSong.id))!,
                                   );
                                 }
                                 print(choice);

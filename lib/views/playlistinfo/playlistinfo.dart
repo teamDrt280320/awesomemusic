@@ -238,7 +238,8 @@ class _PlaylistInfoState extends State<PlaylistInfo> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: queue.isNotEmpty &&
-                                        mediaItem!.extras!['id'] == songList.id
+                                        mediaItem != null &&
+                                        mediaItem.extras!['id'] == songList.id
                                     ? [
                                         BoxShadow(
                                             offset: Offset(
@@ -255,15 +256,15 @@ class _PlaylistInfoState extends State<PlaylistInfo> {
                               ),
                               child: ListTile(
                                 selected: queue.isNotEmpty &&
-                                    mediaItem!.extras!['id'] == songList.id,
-                                onTap: () {
-                                  if (queue.isNotEmpty &&
-                                      mediaItem!.extras!['id'] != songList.id) {
-                                    _songsController.playFromOnlinePlaylist(
-                                      playlistInfo!,
-                                      songList.more_info.encrypted_media_url,
-                                    );
-                                  }
+                                    mediaItem != null &&
+                                    mediaItem.extras!['id'] == songList.id,
+                                onTap: () async {
+                                  //
+
+                                  await _songsController.playFromOnlinePlaylist(
+                                    playlistInfo!,
+                                    songList.more_info.encrypted_media_url,
+                                  );
                                 },
                                 isThreeLine: false,
                                 contentPadding:
@@ -286,11 +287,11 @@ class _PlaylistInfoState extends State<PlaylistInfo> {
                                   ),
                                   onSelected: (choice) async {
                                     if (choice == 'Download') {
-                                      // _songsControler.downloadSong(
-                                      //   context,
-                                      //   await _songsControler
-                                      //       .fetchSongDetails(topSong.id),
-                                      // );
+                                      _songsController.downloadSong(
+                                        context,
+                                        (await _songsController
+                                            .fetchSongDetails(songList.id))!,
+                                      );
                                     }
                                     print(choice);
                                   },

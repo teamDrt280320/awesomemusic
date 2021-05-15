@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:audio_service/audio_service.dart';
+import 'package:audiotagger/audiotagger.dart';
 import 'package:awesomemusic/controllers/songscontroller.dart';
 import 'package:awesomemusic/helper/helper.dart';
 import 'package:awesomemusic/helper/size_config.dart';
@@ -19,6 +22,8 @@ class FullScreenPlayer extends StatefulWidget {
 class _FullScreenPlayerState extends State<FullScreenPlayer> {
   SongsController _songsController = Get.find();
   SongDetails? songDetails;
+  bool isLocal = false;
+  final tagger = new Audiotagger();
   @override
   void initState() {
     super.initState();
@@ -49,15 +54,23 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
                 ),
               ),
             ],
-            image: DecorationImage(
-              fit: BoxFit.cover,
-              image: CachedNetworkImageProvider(
-                mediaItem.artUri.toString().replaceAll(
-                      '150x150',
-                      '500x500',
+            image: mediaItem.extras!['isLocal'] ?? false
+                ? DecorationImage(
+                    fit: BoxFit.cover,
+                    image: FileImage(File.fromUri(mediaItem.artUri!))
+                    // : CachedNetworkImageProvider(
+                    //     songDetails.artUri.toString(),
+                    //   ),
+                    )
+                : DecorationImage(
+                    fit: BoxFit.cover,
+                    image: CachedNetworkImageProvider(
+                      mediaItem.artUri.toString().replaceAll(
+                            '150x150',
+                            '500x500',
+                          ),
                     ),
-              ),
-            ),
+                  ),
           ),
         ),
       ),
@@ -67,11 +80,17 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
   getSongDetail(dynamic id) async {
     print('fetchinh');
     songDetails = await _songsController.fetchSongDetails(id).then((value) {
-      if (value.lyrics != null && value.lyrics!.isNotEmpty)
+      if (value?.lyrics != null && value!.lyrics!.isNotEmpty)
         _songsController.teController.text = value.lyrics!.trim();
       return value;
     });
     if (mounted) setState(() {});
+  }
+
+  getLyricsForLocal(String path) async {
+    var tag = await tagger.readTags(path: path);
+    print(tag?.toMap());
+    _songsController.teController.text = tag?.lyrics ?? '';
   }
 
   @override
@@ -117,6 +136,11 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
             final hasNext = queue.isNotEmpty ? queue.last != mediaItem : null;
             final hasPrevious =
                 queue.isNotEmpty ? queue.first != mediaItem : null;
+            bool isLOcal = mediaItem?.extras?['isLocal'] ?? false;
+
+            if (isLOcal) {
+              getLyricsForLocal(mediaItem!.id);
+            }
             if (queue.isNotEmpty && mediaItem!.extras!['id'] != null) {
               if (songDetails?.id != mediaItem.extras!['id'] ||
                   songDetails == null) getSongDetail(mediaItem.extras!['id']);
@@ -125,9 +149,10 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
               backdropEnabled: true,
               backdropTapClosesPanel: true,
               maxHeight: SizeConfig.screenHeight - kToolbarHeight * 1.5,
-              boxShadow: songDetails == null ||
-                      songDetails!.lyrics == null ||
-                      songDetails!.lyrics!.isEmpty
+              boxShadow: !isLOcal &&
+                      (songDetails == null ||
+                          songDetails!.lyrics == null ||
+                          songDetails!.lyrics!.isEmpty)
                   ? null
                   : [
                       BoxShadow(
@@ -146,9 +171,10 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
               ),
               parallaxEnabled: true,
               panelBuilder: (sc) {
-                return songDetails == null ||
-                        songDetails?.lyrics == null ||
-                        songDetails!.lyrics!.isEmpty
+                return !isLOcal &&
+                        (songDetails == null ||
+                            songDetails?.lyrics == null ||
+                            songDetails!.lyrics!.isEmpty)
                     ? SizedBox.shrink()
                     : Column(
                         mainAxisSize: MainAxisSize.min,
@@ -358,7 +384,7 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
           horizontal: getProportionateScreenWidth(24),
         ),
         child: Text(
-          mediaItem.displayTitle!,
+          mediaItem.displayTitle ?? mediaItem.title,
           style: GoogleFonts.openSans(
             fontWeight: FontWeight.bold,
             fontSize: 28,
