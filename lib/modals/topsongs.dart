@@ -808,7 +808,7 @@ class MoreInfo2 {
   String? playlistType;
   String? share;
   String? h2;
-  dynamic? subheading;
+  dynamic subheading;
   String? videoCount;
   MoreInfo2({
     this.uid,
@@ -891,7 +891,7 @@ class MoreInfo2 {
     String? playlistType,
     String? share,
     String? h2,
-    dynamic? subheading,
+    dynamic subheading,
     String? videoCount,
   }) {
     return MoreInfo2(

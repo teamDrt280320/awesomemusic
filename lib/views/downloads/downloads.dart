@@ -5,7 +5,6 @@ import 'package:awesomemusic/controllers/downloadscontroller.dart';
 import 'package:awesomemusic/controllers/songscontroller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:awesomemusic/helper/extensions.dart';
 
 class DownloadsPage extends StatefulWidget {
   @override

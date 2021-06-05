@@ -5,13 +5,11 @@ import 'package:awesomemusic/helper/size_config.dart';
 import 'package:awesomemusic/modals/playlist.dart' as pi;
 import 'package:awesomemusic/modals/playlist.dart';
 import 'package:awesomemusic/modals/searchresults.dart';
-import 'package:awesomemusic/widgets/miniplayer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:awesomemusic/helper/extensions.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:palette_generator/palette_generator.dart';
 
 class PlaylistInfo extends StatefulWidget {
   final Playlists playlists;
@@ -28,8 +26,6 @@ class _PlaylistInfoState extends State<PlaylistInfo> {
   late Data data;
   pi.PlaylistInfo? playlistInfo;
   SongsController _songsController = Get.find();
-  static CachedNetworkImageProvider? image;
-  PaletteGenerator? _paletteGenerator;
 
   getData() async {
     playlistInfo = await _songsController.fetchPlaylist(data.id);
@@ -47,27 +43,6 @@ class _PlaylistInfoState extends State<PlaylistInfo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // bottomNavigationBar: Column(
-      //   mainAxisSize: MainAxisSize.min,
-      //   children: [
-      //     StreamBuilder<QueueState>(
-      //       stream: _songsController.queueStateStream,
-      //       builder: (context, snapshot) {
-      //         final queueState = snapshot.data;
-      //         final queue = queueState?.queue ?? [];
-      //         final mediaItem = queueState?.mediaItem;
-      //         return queue.isNotEmpty && mediaItem != null
-      //             ? MiniPlayer(
-      //                 songsControler: _songsController,
-      //                 songDetails: mediaItem,
-      //                 hasNext: mediaItem != queue.last,
-      //                 hasPrvious: mediaItem != queue.first,
-      //               )
-      //             : SizedBox.shrink();
-      //       },
-      //     ),
-      //   ],
-      // ),
       appBar: AppBar(
         title: Text(
           playlistInfo?.title ?? '',
