@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
 import 'dart:io' as io;
@@ -25,11 +26,13 @@ class DownloadsController extends GetxController {
 
   @override
   Future<void> onInit() async {
-    await getFilesList();
-    final savedDir = io.Directory(directory);
-    bool hasExisted = await savedDir.exists();
-    if (!hasExisted) {
-      savedDir.create();
+    if (!kIsWeb) {
+      await getFilesList();
+      final savedDir = io.Directory(directory);
+      bool hasExisted = await savedDir.exists();
+      if (!hasExisted) {
+        savedDir.create();
+      }
     }
     super.onInit();
   }

@@ -5,7 +5,6 @@ import 'package:awesomemusic/views/main/root.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'views/homepage/homepage.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

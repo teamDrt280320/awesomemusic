@@ -11,6 +11,7 @@ import 'package:awesomemusic/modals/modals.dart';
 import 'package:awesomemusic/modals/playlist.dart';
 import 'package:awesomemusic/modals/searchresults.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_neumorphic_null_safety/flutter_neumorphic.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
@@ -21,7 +22,6 @@ import 'package:flutter_cache/flutter_cache.dart' as cache;
 // ignore: import_of_legacy_library_into_null_safe
 import 'package:des_plugin/des_plugin.dart' as des;
 import 'package:awesomemusic/modals/songdetails.dart' as sdetails;
-import 'package:media_info/media_info.dart';
 import 'package:sn_progress_dialog/sn_progress_dialog.dart';
 import 'package:rxdart/rxdart.dart' as rx;
 import 'bgaudiotask.dart';
@@ -35,7 +35,6 @@ class SongsController extends GetxController {
   var audioTask = AudioTask();
   var focusNode = FocusNode();
   var searchQuery = TextEditingController();
-  final MediaInfo _mediaInfo = MediaInfo();
   late Box<CustMediaItem> downloadsBox;
   DownloadsController donwloads = Get.find();
   var tagger = Audiotagger();
@@ -48,11 +47,13 @@ class SongsController extends GetxController {
 
   @override
   Future<void> onInit() async {
-    localPath = (await _findLocalPath());
-    final savedDir = Directory(localPath!);
-    bool hasExisted = await savedDir.exists();
-    if (!hasExisted) {
-      savedDir.create();
+    if (!kIsWeb) {
+      localPath = (await _findLocalPath());
+      final savedDir = Directory(localPath!);
+      bool hasExisted = await savedDir.exists();
+      if (!hasExisted) {
+        savedDir.create();
+      }
     }
     await getTopSongs();
     // var done = await preparAudioService();
@@ -382,12 +383,18 @@ class SongsController extends GetxController {
 
   ///[GET] method for getting top songs
   getTopSongs() async {
-    var json = await cache.remember('topSongs2', () async {
-      var response = await http.get(Uri.parse(TOPSONGSURL));
-      return Map<String, dynamic>.from(jsonDecode(response.body));
-    });
-    topSongs = TopSongs.fromJson(json);
-    print(topSongs.list!.length);
+    try {
+      var json = await cache.remember('topSongs2', () async {
+        var response = await http.get(Uri.parse(TOPSONGSURL), headers: {
+          "Access-Control-Allow-Origin": "*",
+        });
+        return Map<String, dynamic>.from(jsonDecode(response.body));
+      });
+      topSongs = TopSongs.fromJson(json);
+      print(topSongs.list!.length);
+    } catch (e) {
+      print(e.toString());
+    }
   }
 
   ///[Fetch] song [Detail]
