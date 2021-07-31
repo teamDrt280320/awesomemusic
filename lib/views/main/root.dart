@@ -15,13 +15,19 @@ class RootPage extends StatefulWidget {
 
 class _RootPageState extends State<RootPage> {
   SongsController songsControler = Get.find();
-  var controller = PageController(
-    keepPage: true,
-  );
+  var controller = PageController(keepPage: true);
   var currentInddex = 0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: currentInddex != 1
+          ? FloatingActionButton.extended(
+              onPressed: () => controller.jumpToPage(1),
+              label: Text('Search'),
+              backgroundColor: Colors.pink,
+              icon: Icon(Icons.search),
+            )
+          : null,
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -42,7 +48,7 @@ class _RootPageState extends State<RootPage> {
             },
           ),
           BottomNavigationBar(
-            elevation: 0,
+            elevation: 10,
             backgroundColor: Colors.white,
             currentIndex: currentInddex,
             selectedItemColor: Colors.pinkAccent,
@@ -75,9 +81,7 @@ class _RootPageState extends State<RootPage> {
       ),
       body: PageView(
         onPageChanged: (index) {
-          setState(() {
-            currentInddex = index;
-          });
+          setState(() => currentInddex = index);
         },
         physics: BouncingScrollPhysics(),
         controller: controller,

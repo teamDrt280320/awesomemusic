@@ -347,8 +347,8 @@ class Album_More_info {
     };
   }
 
-  factory Album_More_info.fromMap(Map<String, dynamic> map) {
-    if (map.isNotEmpty) {
+  factory Album_More_info.fromMap(Map<String, dynamic>? map) {
+    if (map != null && map.isNotEmpty) {
       return Album_More_info(
         music: map['music'],
         ctr: map['ctr']?.toInt(),

@@ -1038,7 +1038,3 @@ class More_info {
         video_count.hashCode;
   }
 }
-
-class H2 {}
-
-class Subheading {}

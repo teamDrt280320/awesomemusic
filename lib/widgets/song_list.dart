@@ -1,9 +1,12 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:awesomemusic/controllers/playlist.dart';
 import 'package:awesomemusic/controllers/songscontroller.dart';
+import 'package:awesomemusic/modals/local_playlist.dart';
 import 'package:awesomemusic/modals/searchresults.dart';
 import 'package:awesomemusic/modals/topsongs.dart';
 import 'package:awesomemusic/widgets/thumbnail.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:awesomemusic/helper/helper.dart';
 
@@ -84,7 +87,7 @@ class SongList extends StatelessWidget {
 }
 
 class SongWidget extends StatelessWidget {
-  const SongWidget(
+  SongWidget(
       {Key? key,
       required this.selected,
       required this.songsControler,
@@ -99,9 +102,9 @@ class SongWidget extends StatelessWidget {
 
   final bool selected, isTopSong;
   final SongsController songsControler;
-  // final TopSong? topSong;
   final String title, encryptedMediaUrl, subtitle, id, image;
   final Function(String) onPressed;
+  final PlayListController _playListController = Get.find();
 
   @override
   Widget build(BuildContext context) {
@@ -136,8 +139,28 @@ class SongWidget extends StatelessWidget {
               context,
               (await songsControler.fetchSongDetails(id))!,
             );
+          } else {
+            var modal = new LocalPlaylist(
+              title: 'Test Playlist',
+              imageUrl: image,
+              songList: [
+                CustSongItem(
+                  title: title,
+                  subtitle: subtitle,
+                  imageUrl: image,
+                  songUrl: encryptedMediaUrl,
+                ),
+              ],
+              isLocal: true,
+            );
+            var key = await _playListController.localPlaylist.add(
+              modal,
+            );
+            await _playListController.localPlaylist.put(
+              key,
+              modal..key = key,
+            );
           }
-          print(choice);
         },
         onCanceled: () {},
         shape: RoundedRectangleBorder(

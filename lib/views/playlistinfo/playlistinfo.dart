@@ -132,47 +132,84 @@ class _PlaylistInfoState extends State<PlaylistInfo> {
                         ),
                         SizedBox(
                           height: 48,
-                          width: 48,
-                          child: StreamBuilder<bool>(
-                              stream: AudioService.playbackStateStream
-                                  .map((state) => state.playing)
-                                  .distinct(),
-                              builder: (context, snapshot) {
-                                var playing = snapshot.data ?? false;
-                                return Obx(
-                                  () => _songsController
-                                                  .cuurentPlaylistId.value ==
-                                              playlistInfo?.id &&
-                                          playing
-                                      ? FloatingActionButton(
-                                          onPressed: () {
-                                            AudioService.pause();
-                                          },
-                                          child: Icon(
-                                            Icons.pause,
+                          child: StreamBuilder<QueueState>(
+                            stream: _songsController.queueStateStream,
+                            builder: (context, snapshot) {
+                              final queueState = snapshot.data;
+                              final queue = queueState?.queue ?? [];
+                              final mediaItem = queueState?.mediaItem;
+                              return StreamBuilder<bool>(
+                                  stream: AudioService.playbackStateStream
+                                      .map((state) => state.playing)
+                                      .distinct(),
+                                  builder: (context, snapshot) {
+                                    var playing = snapshot.data ?? false;
+                                    return Obx(
+                                      () => Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          IconButton(
+                                            onPressed: mediaItem != queue.first
+                                                ? () {
+                                                    AudioService
+                                                        .skipToPrevious();
+                                                  }
+                                                : null,
+                                            icon: Icon(
+                                              Icons.skip_previous_outlined,
+                                              size: 36,
+                                            ),
                                           ),
-                                        )
-                                      : FloatingActionButton(
-                                          onPressed: () {
-                                            _songsController.cuurentPlaylistId
-                                                        .value ==
-                                                    playlistInfo!.id
-                                                ? AudioService.play()
-                                                : _songsController
-                                                    .playFromOnlinePlaylist(
-                                                    playlistInfo!,
-                                                    playlistInfo!
-                                                        .list[0]
-                                                        .more_info
-                                                        .encrypted_media_url,
-                                                  );
-                                          },
-                                          child: Icon(
-                                            Icons.play_arrow_outlined,
-                                          ),
-                                        ),
-                                );
-                              }),
+                                          _songsController.cuurentPlaylistId
+                                                          .value ==
+                                                      playlistInfo?.id &&
+                                                  playing
+                                              ? FloatingActionButton(
+                                                  onPressed: () {
+                                                    AudioService.pause();
+                                                  },
+                                                  child: Icon(
+                                                    Icons.pause,
+                                                  ),
+                                                )
+                                              : FloatingActionButton(
+                                                  onPressed: () {
+                                                    _songsController
+                                                                .cuurentPlaylistId
+                                                                .value ==
+                                                            playlistInfo!.id
+                                                        ? AudioService.play()
+                                                        : _songsController
+                                                            .playFromOnlinePlaylist(
+                                                            playlistInfo!,
+                                                            playlistInfo!
+                                                                .list[0]
+                                                                .more_info
+                                                                .encrypted_media_url,
+                                                          );
+                                                  },
+                                                  child: Icon(
+                                                    Icons.play_arrow_outlined,
+                                                  ),
+                                                ),
+                                          IconButton(
+                                            onPressed: mediaItem != queue.last
+                                                ? () {
+                                                    AudioService.skipToNext();
+                                                  }
+                                                : null,
+                                            icon: Icon(
+                                              Icons.skip_next_outlined,
+                                              size: 36,
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    );
+                                  });
+                            },
+                          ),
                         ),
                       ],
                     ),

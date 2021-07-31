@@ -6,7 +6,6 @@ import 'package:audiotagger/audiotagger.dart';
 import 'package:audiotagger/models/tag.dart';
 import 'package:awesomemusic/controllers/downloadscontroller.dart';
 import 'package:awesomemusic/helper/helper.dart';
-import 'package:awesomemusic/modals/mediaitem.dart';
 import 'package:awesomemusic/modals/modals.dart';
 import 'package:awesomemusic/modals/playlist.dart';
 import 'package:awesomemusic/modals/searchresults.dart';
@@ -16,7 +15,6 @@ import 'package:flutter_neumorphic_null_safety/flutter_neumorphic.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_cache/flutter_cache.dart' as cache;
 // ignore: import_of_legacy_library_into_null_safe
@@ -35,7 +33,6 @@ class SongsController extends GetxController {
   var audioTask = AudioTask();
   var focusNode = FocusNode();
   var searchQuery = TextEditingController();
-  late Box<CustMediaItem> downloadsBox;
   DownloadsController donwloads = Get.find();
   var tagger = Audiotagger();
 

@@ -5,7 +5,7 @@
             "name": "Flutter",
             "request": "launch",
             "type": "dart",
-            "args": ["--no-sound-null-safety"]
+            "args": ["--no-sound-null-safety","--web-renderer html",]
         }
     ]
 }
